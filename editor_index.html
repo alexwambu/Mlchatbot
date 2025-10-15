@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Chatbot Builder & Deployer</title>
+  <style>
+    body{font-family: Arial; margin:20px}
+    input, textarea {width:100%; padding:8px; margin:6px 0}
+    button{padding:8px 12px}
+    .col{display:flex;gap:12px}
+    .left{flex:1}
+  </style>
+</head>
+<body>
+  <h1>Chatbot Builder & Deployer</h1>
+
+  <section>
+    <h2>Create bot</h2>
+    <input id="name" placeholder="bot-name"/>
+    <textarea id="persona" rows="4">You are a helpful assistant.</textarea>
+    <button id="create">Create & Save to Memory</button>
+    <div id="createResp"></div>
+  </section>
+
+  <section>
+    <h2>Deploy bot</h2>
+    <input id="deployName" placeholder="bot-name"/>
+    <button id="deploy">Deploy Bot</button>
+    <div id="deployResp"></div>
+  </section>
+
+  <section>
+    <h2>Chat</h2>
+    <input id="chatBot" placeholder="bot-name"/>
+    <textarea id="chatMsg" rows="3"></textarea>
+    <button id="send">Send</button>
+    <pre id="chatOut" style="background:#f4f4f4;padding:10px"></pre>
+  </section>
+
+  <section>
+    <h2>History</h2>
+    <input id="histBot" placeholder="bot-name"/>
+    <button id="getHist">Get History</button>
+    <pre id="histOut" style="background:#fefefe;padding:10px"></pre>
+  </section>
+
+  <script>
+    async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
+
+    document.getElementById('create').onclick = async () => {
+      const name = document.getElementById('name').value.trim();
+      const persona = document.getElementById('persona').value;
+      if(!name){ alert('name required'); return; }
+      const res = await api('/create_bot', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, persona})});
+      document.getElementById('createResp').innerText = JSON.stringify(res, null, 2);
+    };
+
+    document.getElementById('deploy').onclick = async () => {
+      const name = document.getElementById('deployName').value.trim();
+      if(!name){ alert('name required'); return; }
+      const form = new FormData(); form.append('name', name);
+      const res = await fetch('/deploy_bot', {method:'POST', body: form});
+      const j = await res.json();
+      document.getElementById('deployResp').innerText = JSON.stringify(j, null, 2);
+    };
+
+    document.getElementById('send').onclick = async () => {
+      const bot = document.getElementById('chatBot').value.trim();
+      const msg = document.getElementById('chatMsg').value;
+      if(!bot || !msg){ alert('bot & message required'); return; }
+      const res = await api(`/bot/${bot}/chat`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: msg})});
+      document.getElementById('chatOut').innerText = JSON.stringify(res, null, 2);
+    };
+
+    document.getElementById('getHist').onclick = async () => {
+      const bot = document.getElementById('histBot').value.trim();
+      if(!bot){ alert('bot required'); return; }
+      const res = await api(`/bot/${bot}/history`);
+      document.getElementById('histOut').innerText = JSON.stringify(res, null, 2);
+    };
+  </script>
+</body>
+</html>
